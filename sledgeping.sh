@@ -69,5 +69,5 @@ check_ping $1
 echo "$(datestamp) $(infobox "Checking ssh on the server")"
 check_ssh
 
-echo $(datestamp) $(infobox "Logging into the server")
+echo "$(datestamp) $(infobox "Logging into the server")"
 access_server
