@@ -14,12 +14,22 @@ function datestamp(){
     echo $(date +[%Y/%m/%d]\ [%H.%m.%S])
 }
 
+function usage(){
+    echo "You did something wrong. Here's the manual..."
+    echo
+    echo "$0 [DEVICE NUMBER]" 
+    echo
+}
+
 function check_ping(){
     # Export the primary IP
     export primary_ip=$(ht -I $script_input | egrep 'Primary IP' | awk '{print $3}')
 
     # While the server isn't responding to ping...
     while true; do
+        if [ ! -z "$no_ping" ]; then
+            break
+        fi
         ping -q -c 3 -i .5 $primary_ip 2>&1 > /dev/null
         if [ $? -eq 0 ]; then
             export sp_ping_up="yes"
@@ -62,6 +72,22 @@ function access_server(){
 }
 
 # Magic goes here. 
+
+if [ $# -eq 0 ]; then
+    usage
+    exit 1
+fi
+
+while getopts ":n" opt; do 
+    case $opt in
+        n)
+            export no_ping="yes"
+        ;;
+        \?)
+            usage
+        ;;
+    esac
+done
 
 echo "$(datestamp) $(infobox "Checking ping on the server")"
 check_ping $1
