@@ -66,7 +66,7 @@ function datestamp(){
 function usage(){
     echo "You did something wrong. Here's the manual..."
     echo
-    echo "$0 [-n] [-u user] [-p port] [IP]" 
+    echo "$0 [-n] [DEVICE NUMBER]" 
     echo 
     echo "-n : No Ping Needed"
     echo
@@ -74,7 +74,7 @@ function usage(){
 
 function check_ping(){
     # Export the primary IP
-    export primary_ip=$1 
+    export primary_ip=$(ht -I $1 | egrep 'Primary IP' | awk '{print $3}')
     # While the server isn't responding to ping...
     while true; do
         if [ ! -z "$no_ping" ]; then
@@ -97,7 +97,7 @@ function check_ping(){
 function check_ssh(){
     # Checking SSH via the bastion...
     while true; do 
-        echo \"EOF\" | nc -w 2 ${primary_ip} 22 2>&1 > /dev/null
+        ssh -q bastion "echo \"EOF\" | nc -w 2 ${primary_ip} 22" 2>&1 > /dev/null
         if [ $? -eq 0 ]; then
             export sp_ssh_up="yes"
             # Break out and continue to the next function
@@ -115,7 +115,7 @@ function access_server(){
     if [ ! -z "$sp_ping_up" -a  ! -z "$sp_ssh_up" -o ! -z "$sp_ssh_up" -a ! -z "$no_ping" ]; then
         # log into the box.
         echo "$(datestamp) $(successbox "Connectivity Confirmed!")"
-        ssh ${user}@${primary_ip} -p ${port}
+        ht $script_input
         exit 0
     else
         echo "$(datestamp) $(warningbox "NO DICE!")"
@@ -129,19 +129,13 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-while getopts ":nup" opt; do 
+while getopts ":n" opt; do 
     case $opt in
         n)
             export no_ping="yes"
             shift 
             export script_input="$1"
         ;;
-        u)
-            shift
-            export user="$1"
-        p)
-            shift
-            export port="$1"
         \?)
             usage
         ;;
