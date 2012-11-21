@@ -150,16 +150,11 @@ while getopts "u:p:n" opt; do
     esac
 done
 shift $((OPTIND - 1))
-#echo "$(datestamp) $(infobox "Checking ping on the server")"
-#check_ping $1
+echo "$(datestamp) $(infobox "Checking ping on the server")"
+check_ping $1
 
-#echo "$(datestamp) $(infobox "Checking ssh on the server")"
-#check_ssh
+echo "$(datestamp) $(infobox "Checking ssh on the server")"
+check_ssh
 
-#echo "$(datestamp) $(infobox "Logging into the server")"
-#access_server
-
-infobox "DEBUG INFO:"
-echo "\$1 => $1"
-echo "\$user => $user"
-echo "\$port => $port"
+echo "$(datestamp) $(infobox "Logging into the server")"
+access_server
