@@ -6,6 +6,7 @@
 # Version: 0.2
 # Release: 2012.11.20
 
+
 txtblk='\e[0;30m' # Black - Regular
 txtred='\e[0;31m' # Red
 txtgrn='\e[0;32m' # Green
@@ -57,7 +58,8 @@ function warningbox(){
 }
 
 
-export script_input=$1
+export port="22"
+export user="root"
 
 function datestamp(){
     echo $(date +[%Y/%m/%d]\ [%H.%m.%S])
@@ -67,6 +69,7 @@ function usage(){
     echo "You did something wrong. Here's the manual..."
     echo
     echo "$0 [-n] [-u user] [-p port] [IP]" 
+    echo "Note: The IP address *MUST* be the last argument passed"
     echo 
     echo "-n : No Ping Needed"
     echo
@@ -97,7 +100,7 @@ function check_ping(){
 function check_ssh(){
     # Checking SSH via the bastion...
     while true; do 
-        echo \"EOF\" | nc -w 2 ${primary_ip} 22 2>&1 > /dev/null
+        nc -w 0 -q 0 ${primary_ip} ${port} 2&>1 > /dev/null
         if [ $? -eq 0 ]; then
             export sp_ssh_up="yes"
             # Break out and continue to the next function
@@ -115,7 +118,8 @@ function access_server(){
     if [ ! -z "$sp_ping_up" -a  ! -z "$sp_ssh_up" -o ! -z "$sp_ssh_up" -a ! -z "$no_ping" ]; then
         # log into the box.
         echo "$(datestamp) $(successbox "Connectivity Confirmed!")"
-        ssh ${user}@${primary_ip} -p ${port}
+
+       # ssh ${user}@${primary_ip} -p ${port}
         exit 0
     else
         echo "$(datestamp) $(warningbox "NO DICE!")"
@@ -129,31 +133,33 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-while getopts ":nup" opt; do 
+while getopts "u:p:n" opt; do 
     case $opt in
         n)
             export no_ping="yes"
-            shift 
-            export script_input="$1"
         ;;
         u)
-            shift
-            export user="$1"
+            export user=$OPTARG
+        ;;
         p)
-            shift
-            export port="$1"
+            export port=$OPTARG
+        ;;
         \?)
             usage
         ;;
     esac
 done
+shift $((OPTIND - 1))
+#echo "$(datestamp) $(infobox "Checking ping on the server")"
+#check_ping $1
 
+#echo "$(datestamp) $(infobox "Checking ssh on the server")"
+#check_ssh
 
-echo "$(datestamp) $(infobox "Checking ping on the server")"
-check_ping $script_input
+#echo "$(datestamp) $(infobox "Logging into the server")"
+#access_server
 
-echo "$(datestamp) $(infobox "Checking ssh on the server")"
-check_ssh
-
-echo "$(datestamp) $(infobox "Logging into the server")"
-access_server
+infobox "DEBUG INFO:"
+echo "\$1 => $1"
+echo "\$user => $user"
+echo "\$port => $port"
