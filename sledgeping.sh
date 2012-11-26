@@ -85,7 +85,7 @@ function check_ping(){
             echo "$(datestamp) $(infobox "PING isn't needed due to option passed")"
             break
         fi
-        ping -q -c 3 -i .5 $primary_ip 2>&1 > /dev/null
+        ping -q -c 3 $primary_ip 2>&1 > /dev/null
         if [ $? -eq 0 ]; then
             export sp_ping_up="yes"
             # Break out and continue on to the next function
