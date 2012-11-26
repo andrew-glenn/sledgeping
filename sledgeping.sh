@@ -6,6 +6,7 @@
 # Version: 0.4
 # Release: 2012.11.26
 
+export sshopts=''
 
 txtblk='\e[0;30m' # Black - Regular
 txtred='\e[0;31m' # Red
@@ -119,7 +120,7 @@ function access_server(){
         # log into the box.
         echo "$(datestamp) $(successbox "Connectivity Confirmed!")"
 
-       # ssh ${user}@${primary_ip} -p ${port}
+       ssh ${sshopts} ${user}@${primary_ip} -p ${port}
         exit 0
     else
         echo "$(datestamp) $(warningbox "NO DICE!")"
