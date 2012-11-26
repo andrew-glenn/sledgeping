@@ -47,15 +47,27 @@ function dot_update(){
 }
 
 function successbox(){
-    echo -e "[${bldylw}**${txtrst}] $@"
+    if [ -z ${nocolors} ]; then
+        echo -e "[${bldylw}**${txtrst}] $@"
+    else 
+        echo "[**] $@"
+    fi
 }
 
 function infobox(){
-    echo -e "[${bldcyn}??${txtrst}] $@"
+    if [ -z ${nocolors} ]; then
+        echo -e "[${bldcyn}??${txtrst}] $@"
+    else
+        echo "[??] $@"
+    fi
 }
 
 function warningbox(){
-    echo -e "[${bldred}!!${txtrst}] $@"
+    if [ -z ${nocolors} ]; then
+        echo -e "[${bldred}!!${txtrst}] $@"
+    else
+        echo "[!!] $@"
+    fi
 }
 
 
@@ -69,10 +81,13 @@ function datestamp(){
 function usage(){
     echo "You did something wrong. Here's the manual..."
     echo
-    echo "$0 [-n] [-u user] [-p port] [IP]" 
+    echo "$0 [-n] [-c] [-u user] [-p port] IP" 
     echo "Note: The IP address *MUST* be the last argument passed"
     echo 
     echo "-n : No Ping Needed"
+    echo "-c : Disable color output"
+    echo "-u : Specific username (defaults to 'root')"
+    echo "-p : Specific port (defaults to '22', unless overwrote in local ssh configuration (~/.ssh/config))"
     echo
 }
 
@@ -134,7 +149,7 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-while getopts "u:p:n" opt; do 
+while getopts "u:p:nc" opt; do 
     case $opt in
         n)
             export no_ping="yes"
@@ -144,6 +159,9 @@ while getopts "u:p:n" opt; do
         ;;
         p)
             export port=$OPTARG
+        ;;
+        c)
+            export nocolors="yes"
         ;;
         \?)
             usage
