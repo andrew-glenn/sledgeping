@@ -100,7 +100,7 @@ function check_ping(){
 function check_ssh(){
     # Checking SSH via the bastion...
     while true; do 
-        nc -w 0 -q 0 ${primary_ip} ${port} 2&>1 > /dev/null
+       echo "EOF" |  nc ${primary_ip} ${port} 2&>1 > /dev/null
         if [ $? -eq 0 ]; then
             export sp_ssh_up="yes"
             # Break out and continue to the next function
