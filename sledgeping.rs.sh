@@ -3,8 +3,8 @@
 # An updated version of hammerping.
 # Andrew Glenn
 #
-# Version: 0.2
-# Release: 2012.11.20
+# Version: 0.4
+# Release: 2012.11.26
 
 txtblk='\e[0;30m' # Black - Regular
 txtred='\e[0;31m' # Red
@@ -60,7 +60,7 @@ function warningbox(){
 export script_input=$1
 
 function datestamp(){
-    echo $(date +[%Y/%m/%d]\ [%H.%m.%S])
+    echo $(date +'[%Y/%m/%d [%H.%m.%S]')
 }
 
 function usage(){
@@ -97,7 +97,7 @@ function check_ping(){
 function check_ssh(){
     # Checking SSH via the bastion...
     while true; do 
-        ssh -q bastion "echo \"EOF\" | nc -w 2 ${primary_ip} 22" 2>&1 > /dev/null
+        ssh -q bastion "nc -z ${primary_ip} 22" > /dev/null 2>&1
         if [ $? -eq 0 ]; then
             export sp_ssh_up="yes"
             # Break out and continue to the next function
