@@ -3,7 +3,7 @@
 # An updated version of hammerping.
 # Andrew Glenn
 #
-# Version: 0.4
+# Version: 0.6
 # Release: 2012.11.26
 
 export sshopts=''
@@ -116,7 +116,7 @@ function check_ping(){
 function check_ssh(){
     # Checking SSH via the bastion...
     while true; do 
-       nc -z ${primary_ip} ${port} > /dev/null 2>&1
+       nc -w 1 -z ${primary_ip} ${port} > /dev/null 2>&1
         if [ $? -eq 0 ]; then
             export sp_ssh_up="yes"
             # Break out and continue to the next function
