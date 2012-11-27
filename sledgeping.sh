@@ -3,7 +3,7 @@
 # An updated version of hammerping.
 # Andrew Glenn
 #
-# Version: 1.0
+# Version: 1.0c
 # Release: 2012.11.27
 
 export sshopts=''
@@ -98,39 +98,51 @@ function check_ping(){
     export primary_ip=$1 
     # While the server isn't responding to ping...
     while true; do
+        # If we've passed the option to skip ping...
         if [ ! -z "$no_ping" ]; then
             echo "$(datestamp) $(infobox "PING isn't needed due to option passed")"
             break
         fi
         ping -q -c 3 $primary_ip 2>&1 > /dev/null
         return_code=$?
+        # If we've pased the -r option, and ping is successful...
         if [ ! -z "$pendingreboot" ] && [ "$return_code" -eq 0 ]; then
+            # if we haven't provided an informational message...
             if [ -z "$dotnotice" ]; then
                 echo "$(datestamp) $(infobox "it's up, waiting for it to reboot")"
+                # Spam isn't fun, turn off this notice in the future.
                 dotnotice=1
+            # If This is the 2nd time through this function...
             elif [ ! -z "$never_gonna_give_you_up" ]; then
+                # Unsetting $pendingreboot, so the box will show up - because, you know, it's back online (return code 0)
                 unset pendingreboot
             else
-                echo -n "."
+                dot_update
+                # Putting this here to unset the $dotnotice variable in the next if statement
                 never_gonna_let_you_down=1
             fi
         fi
-
+        
+        # If we've passed the -r option AND the ping fails 
         if [ ! -z "$pendingreboot" ] &&  [ "$return_code" -ne 0 ]; then
+            # This is simply here so I can unset $dotnotice to reuse it. 
             if [ ! -z $never_gonna_let_you_down ]; then
                 unset never_gonna_let_you_down
                 unset dotnotice
             fi
+            # If $dotnotice is zero (because I unset it above!)
             if [ -z "$dotnotice" ]; then
                 echo "$(datestamp) $(infobox "it's down, waiting for it to come back up")"
+                # Setting these two so I can unset $pendingreboot in the previous IF block when we go through the third time - after the box is back online
                 never_gonna_give_you_up=1
                 dotnotice=1
             else
-                echo -n "."
+                dot_update
             fi
         fi
 
-        if [ $? -eq 0 ] && [ -z "$pendingreboot" ]; then
+        # If Ping succeeds, AND, either -r wasn't passed, or the variable has since been unset:
+        if [ "$return_code" -eq 0 ] && [ -z "$pendingreboot" ]; then
             echo "$(datestamp) $(successbox "PING is up!")"
             break
         fi
