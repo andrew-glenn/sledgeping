@@ -3,8 +3,9 @@
 # An updated version of hammerping.
 # Andrew Glenn
 #
-# Version: 1.0c
+# Version: 1.2
 # Release: 2012.11.27
+
 
 export sshopts=''
 
@@ -99,21 +100,21 @@ function check_ping(){
     # While the server isn't responding to ping...
     while true; do
         # If we've passed the option to skip ping...
-        if [ ! -z "$no_ping" ]; then
+        if [ -n "$no_ping" ]; then
             echo "$(datestamp) $(infobox "PING isn't needed due to option passed")"
             break
         fi
         ping -q -c 3 $primary_ip 2>&1 > /dev/null
         return_code=$?
         # If we've pased the -r option, and ping is successful...
-        if [ ! -z "$pendingreboot" ] && [ "$return_code" -eq 0 ]; then
+        if [ -n "$pendingreboot" -a "$return_code" -eq 0 ]; then
             # if we haven't provided an informational message...
             if [ -z "$dotnotice" ]; then
                 echo "$(datestamp) $(infobox "it's up, waiting for it to reboot")"
                 # Spam isn't fun, turn off this notice in the future.
                 dotnotice=1
             # If This is the 2nd time through this function...
-            elif [ ! -z "$never_gonna_give_you_up" ]; then
+            elif [ -n "$never_gonna_give_you_up" ]; then
                 # Unsetting $pendingreboot, so the box will show up - because, you know, it's back online (return code 0)
                 unset pendingreboot
             else
@@ -124,11 +125,14 @@ function check_ping(){
         fi
         
         # If we've passed the -r option AND the ping fails 
-        if [ ! -z "$pendingreboot" ] &&  [ "$return_code" -ne 0 ]; then
+        if [ -n "$pendingreboot" -a "$return_code" -ne 0 ]; then
             # This is simply here so I can unset $dotnotice to reuse it. 
-            if [ ! -z $never_gonna_let_you_down ]; then
+            if [ -n "$never_gonna_let_you_down" ]; then
                 unset never_gonna_let_you_down
                 unset dotnotice
+            else
+                echo "$(datestamp) $(warningbox "This box is down, but you passed the -r (reboot) option. This does not compute")"
+                exit 1
             fi
             # If $dotnotice is zero (because I unset it above!)
             if [ -z "$dotnotice" ]; then
@@ -143,8 +147,9 @@ function check_ping(){
         fi
 
         # If Ping succeeds, AND, either -r wasn't passed, or the variable has since been unset:
-        if [ "$return_code" -eq 0 ] && [ -z "$pendingreboot" ]; then
+        if [ "$return_code" -eq 0 -a -z "$pendingreboot" ]; then
             export sp_ping_up="yes"
+            echo
             echo "$(datestamp) $(successbox "PING is up!")"
             break
         fi
@@ -169,9 +174,9 @@ function check_ssh(){
 
 function access_server(){
     # Quick sanity checking...
-    if [ ! -z "$sp_ping_up" ] && [ ! -z "$sp_ssh_up" ] || [ ! -z "$sp_ssh_up" ] && [ ! -z "$no_ping" ]; then
+    if [ -n "$sp_ping_up" -a -n "$sp_ssh_up" -o -n "$sp_ssh_up" -a -n "$no_ping" ]; then
         # log into the box.
-        echo "$(datestamp) $(successbox "Connectivity Confirmed!")"
+        echo "$(datestamp) $(infobox "Logging into the server.")"
 
        ssh ${sshopts} ${user}@${primary_ip} -p ${port}
         exit 0
@@ -181,7 +186,7 @@ function access_server(){
 }
 
 function sanity_check(){
-    if [ ! -z ${no_ping} ] && [ ! -z ${pendingreboot} ]; then
+    if [ -n "${no_ping}" -a -n "${pendingreboot}" ]; then
         echo "$(datestamp) $(warningbox "ERROR! Cannot use [-n] and [-r] together!")"
         exit 1
     fi
@@ -232,5 +237,5 @@ check_ping $1
 echo "$(datestamp) $(infobox "Checking ssh on the server")"
 check_ssh
 
-echo "$(datestamp) $(infobox "Logging into the server")"
+echo "$(datestamp) $(successbox "Connectivity Confirmed!")"
 access_server
