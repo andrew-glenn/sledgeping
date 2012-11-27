@@ -179,7 +179,7 @@ function access_server(){
 }
 
 function sanity_check(){
-    if [ ! -z ${noping} -a ! -z ${pendingreboot} ]; then
+    if [ ! -z ${no_ping} -a ! -z ${pendingreboot} ]; then
         echo "$(datestamp) $(warningbox "ERROR! Cannot use [-n] and [-r] together!")"
         exit 1
     fi
