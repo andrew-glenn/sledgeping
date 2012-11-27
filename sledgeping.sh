@@ -132,6 +132,7 @@ function check_ping(){
             fi
             # If $dotnotice is zero (because I unset it above!)
             if [ -z "$dotnotice" ]; then
+                echo
                 echo "$(datestamp) $(infobox "it's down, waiting for it to come back up")"
                 # Setting these two so I can unset $pendingreboot in the previous IF block when we go through the third time - after the box is back online
                 never_gonna_give_you_up=1
@@ -168,7 +169,7 @@ function check_ssh(){
 
 function access_server(){
     # Quick sanity checking...
-    if [ ! -z "$sp_ping_up" -a  ! -z "$sp_ssh_up" -o ! -z "$sp_ssh_up" -a ! -z "$no_ping" ]; then
+    if [ ! -z "$sp_ping_up" ] && [ ! -z "$sp_ssh_up" ] || [ ! -z "$sp_ssh_up" ] && [ ! -z "$no_ping" ]; then
         # log into the box.
         echo "$(datestamp) $(successbox "Connectivity Confirmed!")"
 
@@ -180,13 +181,14 @@ function access_server(){
 }
 
 function sanity_check(){
-    if [ ! -z ${no_ping} -a ! -z ${pendingreboot} ]; then
+    if [ ! -z ${no_ping} ] && [ ! -z ${pendingreboot} ]; then
         echo "$(datestamp) $(warningbox "ERROR! Cannot use [-n] and [-r] together!")"
         exit 1
     fi
 }
 
 function buh_bye(){
+    echo
     echo "$(datestamp) $(warningbox "OUCH! Exiting.")"
     exit 2
 }
