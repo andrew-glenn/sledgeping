@@ -143,6 +143,7 @@ function check_ping(){
 
         # If Ping succeeds, AND, either -r wasn't passed, or the variable has since been unset:
         if [ "$return_code" -eq 0 ] && [ -z "$pendingreboot" ]; then
+            export sp_ping_up="yes"
             echo "$(datestamp) $(successbox "PING is up!")"
             break
         fi
@@ -185,6 +186,12 @@ function sanity_check(){
     fi
 }
 
+function buh_bye(){
+    echo "$(datestamp) $(warningbox "OUCH! Exiting.")"
+    exit 2
+}
+
+trap buh_bye SIGINT
 # Magic goes here. 
 
 if [ $# -eq 0 ]; then
