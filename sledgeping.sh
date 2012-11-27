@@ -1,11 +1,12 @@
 #!/bin/bash
 # SledgePing
-# An updated version of hammerping.
+# Designed to make logging into a server after a reboot much easier.
+#
 # Andrew Glenn
 #
 # Version: 1.2
 # Release: 2012.11.27
-
+version="1.2"
 
 export sshopts=''
 
@@ -80,7 +81,12 @@ function datestamp(){
 }
 
 function usage(){
-    echo "You did something wrong. Here's the manual..."
+    echo "Version: $version"
+    echo
+    echo "$0 is designed to make logging into a server post-reboot much easier."
+    echo "It monitors ping and SSH connectivity and logs in only after both have been confirmed"
+    echo "This allows the administrator to focus on other things while the server reboots..."
+    echo "...rather than babysitting the connection"
     echo
     echo "$0 [-n] [-c] [-r] [-u user] [-p port] IP" 
     echo "Note: The IP address *MUST* be the last argument passed"
