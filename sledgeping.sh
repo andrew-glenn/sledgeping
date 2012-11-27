@@ -192,7 +192,7 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-while getopts "u:p:nc" opt; do 
+while getopts "u:p:ncr" opt; do 
     case $opt in
         n)
             export no_ping="yes"
