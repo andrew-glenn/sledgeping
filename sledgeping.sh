@@ -75,7 +75,7 @@ export port="22"
 export user="root"
 
 function datestamp(){
-    echo $(date '+[%Y/%m/%d %H.%m.%S]')
+    echo $(date '+[%Y/%m/%d %H.%M.%S]')
 }
 
 function usage(){
