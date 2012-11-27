@@ -4,7 +4,7 @@
 #
 # Andrew Glenn
 #
-# Version: 1.2
+# Version: 1.2-THEGAME
 # Release: 2012.11.27
 version="1.2"
 
