@@ -3,7 +3,7 @@
 # An updated version of hammerping.
 # Andrew Glenn
 #
-# Version: 0.8
+# Version: 1.0
 # Release: 2012.11.27
 
 export sshopts=''
@@ -81,13 +81,15 @@ function datestamp(){
 function usage(){
     echo "You did something wrong. Here's the manual..."
     echo
-    echo "$0 [-n] [-c] [-u user] [-p port] IP" 
+    echo "$0 [-n] [-c] [-r] [-u user] [-p port] IP" 
     echo "Note: The IP address *MUST* be the last argument passed"
     echo 
-    echo "-n : No Ping Needed"
+    echo "-n : No Ping Needed. Cannot be used with [-r]"
     echo "-c : Disable color output"
     echo "-u : Specific username (defaults to 'root')"
     echo "-p : Specific port (defaults to '22', unless overwrote in local ssh configuration (~/.ssh/config))"
+    echo "-r : Pending reboot - Allows Ping to succeed, then fail, then succeed, before testing SSH. Useful"
+    echo "      for starting up $0 before rebooting a server. Cannot be used with [-n]"
     echo
 }
 
@@ -101,14 +103,36 @@ function check_ping(){
             break
         fi
         ping -q -c 3 $primary_ip 2>&1 > /dev/null
-        if [ $? -eq 0 ]; then
-            export sp_ping_up="yes"
-            # Break out and continue on to the next function
+        return_code=$?
+        if [ ! -z "$pendingreboot" ] && [ "$return_code" -eq 0 ]; then
+            if [ -z "$dotnotice" ]; then
+                echo "$(datestamp) $(infobox "it's up, waiting for it to reboot")"
+                dotnotice=1
+            elif [ ! -z "$never_gonna_give_you_up" ]; then
+                unset pendingreboot
+            else
+                echo -n "."
+                never_gonna_let_you_down=1
+            fi
+        fi
+
+        if [ ! -z "$pendingreboot" ] &&  [ "$return_code" -ne 0 ]; then
+            if [ ! -z $never_gonna_let_you_down ]; then
+                unset never_gonna_let_you_down
+                unset dotnotice
+            fi
+            if [ -z "$dotnotice" ]; then
+                echo "$(datestamp) $(infobox "it's down, waiting for it to come back up")"
+                never_gonna_give_you_up=1
+                dotnotice=1
+            else
+                echo -n "."
+            fi
+        fi
+
+        if [ $? -eq 0 ] && [ -z "$pendingreboot" ]; then
             echo "$(datestamp) $(successbox "PING is up!")"
             break
-        else
-            dot_update
-            sleep 1
         fi
     done
 }
@@ -142,6 +166,13 @@ function access_server(){
     fi
 }
 
+function sanity_check(){
+    if [ ! -z ${noping} -a ! -z ${pendingreboot} ]; then
+        echo "$(datestamp) $(warningbox "ERROR! Cannot use [-n] and [-r] together!")"
+        exit 1
+    fi
+}
+
 # Magic goes here. 
 
 if [ $# -eq 0 ]; then
@@ -163,12 +194,17 @@ while getopts "u:p:nc" opt; do
         c)
             export nocolors="yes"
         ;;
+        r)
+            export pendingreboot="yes"
+        ;;
         \?)
             usage
         ;;
     esac
 done
 shift $((OPTIND - 1))
+sanity_check
+
 echo "$(datestamp) $(infobox "Checking ping on the server")"
 check_ping $1
 
