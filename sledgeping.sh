@@ -112,7 +112,7 @@ function usage(){
     echo "This allows the administrator to focus on other things while the server reboots..."
     echo "...rather than babysitting the connection"
     echo
-    echo "$0 [-n] [-c] [-r] [-u user] [-p port] IP" 
+    echo "$0 [-n] [-c] [-r] [-d] [-u user] [-p port] IP" 
     echo "Note: The IP address *MUST* be the last argument passed"
     echo 
     echo "-n : No Ping Needed. Cannot be used with [-r]"
