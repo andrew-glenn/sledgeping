@@ -4,9 +4,33 @@
 #
 # Andrew Glenn
 #
-# Version: 1.2-THEGAME
-# Release: 2012.11.27
-version="1.2"
+# Inquiries can be sent to andrew at andrewglenn dot net
+#
+### Begin Software License.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the GNU General Public License as published by the 
+# Free Software Foundation, either version 3 of the License, or (at your option)
+# any later version.
+# 
+# http://www.gnu.org/licenses/gpl-3.0.html
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# No Warranty or guarantee or suitability exists for the software.
+# Use at your own risk. The author is not responsible if your system breaks.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+### End Software License.
+#
+# Version: 1.4
+# Release: 2012.11.28
+version="1.4"
 
 export sshopts=''
 
@@ -97,6 +121,8 @@ function usage(){
     echo "-p : Specific port (defaults to '22', unless overwrote in local ssh configuration (~/.ssh/config))"
     echo "-r : Pending reboot - Allows Ping to succeed, then fail, then succeed, before testing SSH. Useful"
     echo "      for starting up $0 before rebooting a server. Cannot be used with [-n]"
+    echo "-d : Don't login to the device once we've determined it's up."
+    echo "      Only print the SSH String"
     echo
 }
 
@@ -182,9 +208,17 @@ function access_server(){
     # Quick sanity checking...
     if [ -n "$sp_ping_up" -a -n "$sp_ssh_up" -o -n "$sp_ssh_up" -a -n "$no_ping" ]; then
         # log into the box.
-        echo "$(datestamp) $(infobox "Logging into the server.")"
 
-       ssh ${sshopts} ${user}@${primary_ip} -p ${port}
+        ## If we've passed the -d flag, then only print out the login string. Don't login.    ## Why in the world we'd download this script only to login ourselves is beyond me.
+        ## But hey, sure, why not. :) 
+        if [ -n "$nologin" ]; then
+            echo "$(datestamp)  $(infobox "Your SSH Login String is: \n\n\t\tssh ${sshopts} ${user}@${primary_ip} -p ${port}\r\n")"
+        else
+        ## Otherwise, login to the server. 
+            echo "$(datestamp) $(infobox "Logging into the server.")"
+            ssh ${sshopts} ${user}@${primary_up} -p ${port}
+        fi
+
         exit 0
     else
         echo "$(datestamp) $(warningbox "NO DICE!")"
@@ -192,6 +226,7 @@ function access_server(){
 }
 
 function sanity_check(){
+    # This function is futile. Checking for sanity. Seriously?!
     if [ -n "${no_ping}" -a -n "${pendingreboot}" ]; then
         echo "$(datestamp) $(warningbox "ERROR! Cannot use [-n] and [-r] together!")"
         exit 1
@@ -199,20 +234,37 @@ function sanity_check(){
 }
 
 function buh_bye(){
+    # Boom goes the dynamite!
     echo
     echo "$(datestamp) $(warningbox "OUCH! Exiting.")"
     exit 2
 }
 
+function housekeeping(){
+    # Bulk unsetting colors
+    # I really don't want to type all of this out, soo...
+    for color in {txt,bld,unk,bak}{blk,red,grn,ylw,blu,pur,cyn,wht}; do 
+        unset $color
+    done
+    unset color version sshopts txtrst port user primary_ip     \
+            return_code dotnotice never_gonna_let_you_down      \
+            never_gonna_give_you_up dotnotice sp_ping_up        \
+            sp_ssh_up no_ping user port nocolors pendingreboot  \
+            OPTARG opt datestamp nologin
+}
+
+
 trap buh_bye SIGINT
+
 # Magic goes here. 
+# AKA: Starting the main routine. 
 
 if [ $# -eq 0 ]; then
     usage
     exit 1
 fi
 
-while getopts "u:p:ncr" opt; do 
+while getopts "u:p:ncrd" opt; do 
     case $opt in
         n)
             export no_ping="yes"
@@ -228,6 +280,9 @@ while getopts "u:p:ncr" opt; do
         ;;
         r)
             export pendingreboot="yes"
+        ;;
+        d)
+            export nologin="yes"
         ;;
         \?)
             usage
@@ -245,3 +300,5 @@ check_ssh
 
 echo "$(datestamp) $(successbox "Connectivity Confirmed!")"
 access_server
+
+housekeeping
