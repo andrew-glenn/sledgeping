@@ -28,11 +28,12 @@
 #
 ### End Software License.
 #
-# Version: 1.4
-# Release: 2012.11.28
-version="1.4"
+# Version: 1.6b
+# Release: 2012.11.29
+version="1.6b"
 
-export sshopts=''
+export sshopts='-o'
+export expectpath="/usr/bin"
 
 txtblk='\033[0;30m' # Black - Regular
 txtred='\033[0;31m' # Red
@@ -112,17 +113,30 @@ function usage(){
     echo "This allows the administrator to focus on other things while the server reboots..."
     echo "...rather than babysitting the connection"
     echo
-    echo "$0 [-n] [-c] [-r] [-d] [-u user] [-p port] IP" 
+    echo "$0 [-n] [-c] [-r] [-d] [-e] [-u user] [-p port] IP" 
     echo "Note: The IP address *MUST* be the last argument passed"
     echo 
     echo "-n : No Ping Needed. Cannot be used with [-r]"
+    echo
     echo "-c : Disable color output"
+    echo
     echo "-u : Specific username (defaults to 'root')"
+    echo
     echo "-p : Specific port (defaults to '22', unless overwrote in local ssh configuration (~/.ssh/config))"
+    echo
     echo "-r : Pending reboot - Allows Ping to succeed, then fail, then succeed, before testing SSH. Useful"
     echo "      for starting up $0 before rebooting a server. Cannot be used with [-n]"
+    echo
     echo "-d : Don't login to the device once we've determined it's up."
     echo "      Only print the SSH String"
+    echo
+    echo "-e : Use expect to login to the device once connectivity has been"
+    echo "      confirmed. The password will be stored in an env variable and unset "
+    echo "      after use"
+    echo
+    echo "Exit Codes:"
+    echo "  0: All is well"
+    echo "  1: Something went wrong"
     echo
 }
 
@@ -224,20 +238,61 @@ function access_server(){
         echo "$(datestamp) $(warningbox "NO DICE!")"
     fi
 }
+# This function is futile. Checking for sanity. Seriously?!
 
 function sanity_check(){
-    # This function is futile. Checking for sanity. Seriously?!
+    # If -n and -r are passed together, puke.   
     if [ -n "${no_ping}" -a -n "${pendingreboot}" ]; then
         echo "$(datestamp) $(warningbox "ERROR! Cannot use [-n] and [-r] together!")"
         exit 1
     fi
+
+    # If -e is passed, check to ensure the 'expect' binary is installed.
+    # Assumming that check passes muster, then grab the password that we'll need to login
+    if [ -n "${expect_passed}" ]; then
+        if [ ! -x "${expect_path}/expect" ]; then
+            echo "$(datestamp) $(warningbox "ERROR! ${expect_path}/expect doesn't exist or isn't executable. Please investigate!")"
+            buh_bye
+        fi
+        # Grabbing user/pass info
+        echo -e "Please enter your password:"
+        echo -en "# "
+        stty -echo
+        read server_password;
+        stty echo
+        echo
+        
+        if [ -n "${server_password}" ]; then 
+            export server_password
+        fi
+        
+        if [ "${sshopts}" == "-o" ]; then
+            unset sshopts
+        fi
+    fi
+}
+
+function expect_login{}
+    # Logging into the server automatically. 
+    local sshport
+    if [ -n ${port} ]; then
+        sshport="-p ${port}"
+    fi
+    sshopts="${sshopts} \"StrictHostKeyChecking no\""
+    ${expect_path}/expect -f
+        set timeout 20
+        spawn ssh ${sshopts} ${user}@${primary_ip} ${sshport}
+        expect "*assword: "
+        send "$server_password\r"
+        interact
+    exit
 }
 
 function buh_bye(){
     # Boom goes the dynamite!
     echo
     echo "$(datestamp) $(warningbox "OUCH! Exiting.")"
-    exit 2
+    exit 1
 }
 
 function housekeeping(){
@@ -250,7 +305,8 @@ function housekeeping(){
             return_code dotnotice never_gonna_let_you_down      \
             never_gonna_give_you_up dotnotice sp_ping_up        \
             sp_ssh_up no_ping user port nocolors pendingreboot  \
-            OPTARG opt datestamp nologin
+            OPTARG opt datestamp nologin expectpath sshport     \
+            expect_passed
 }
 
 
@@ -261,10 +317,10 @@ trap buh_bye SIGINT
 
 if [ $# -eq 0 ]; then
     usage
-    exit 1
+    exit 0
 fi
 
-while getopts "u:p:ncrd" opt; do 
+while getopts "u:p:ncrde" opt; do 
     case $opt in
         n)
             export no_ping="yes"
@@ -283,6 +339,9 @@ while getopts "u:p:ncrd" opt; do
         ;;
         d)
             export nologin="yes"
+        ;;
+        e)
+            export expect_passed="yes"
         ;;
         \?)
             usage
