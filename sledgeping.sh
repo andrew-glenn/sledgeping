@@ -220,10 +220,16 @@ function check_ssh(){
 
 function access_server(){
     # Quick sanity checking...
-    if [ -n "$sp_ping_up" -a -n "$sp_ssh_up" -o -n "$sp_ssh_up" -a -n "$no_ping" ]; then
-        # log into the box.
+    # If PING and SSH are good, or SSH is good and PING is ignored:
+    if [ -n "${sp_ping_up}" -a -n "${sp_ssh_up}" -o -n "${sp_ssh_up}" -a -n "${no_ping}" ]; then
+        # Check if the user wants to use 'expect' to login to the server.
+        if [ -n "${expect_passed}" ]; then 
+            expect_login
+        fi
 
-        ## If we've passed the -d flag, then only print out the login string. Don't login.    ## Why in the world we'd download this script only to login ourselves is beyond me.
+        # Otherwise, log into the box.
+        ## If we've passed the -d flag, then only print out the login string. Don't login.  
+        ## Why in the world we'd download this script only to login ourselves is beyond me.
         ## But hey, sure, why not. :) 
         if [ -n "$nologin" ]; then
             echo "$(datestamp)  $(infobox "Your SSH Login String is: \n\n\t\tssh ${sshopts} ${user}@${primary_ip} -p ${port}\r\n")"
@@ -285,7 +291,8 @@ function expect_login{}
         expect "*assword: "
         send "$server_password\r"
         interact
-    exit
+        exit
+    exit 0
 }
 
 function buh_bye(){
