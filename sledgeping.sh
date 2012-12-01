@@ -33,7 +33,7 @@
 version="1.6b"
 
 export sshopts='-o'
-export expectpath="/usr/bin"
+export expect_path="/usr/bin"
 
 txtblk='\033[0;30m' # Black - Regular
 txtred='\033[0;31m' # Red
@@ -140,6 +140,13 @@ function usage(){
     echo
 }
 
+function check_command(){
+    if [ ! -f "$@" ]; then
+        echo "$(datestamp) $(warningbox "Hey! $@ isn't available! Please install it!")"
+        buh_bye
+    fi
+}
+
 function check_ping(){
     # Export the primary IP
     export primary_ip=$1 
@@ -236,7 +243,7 @@ function access_server(){
         else
         ## Otherwise, login to the server. 
             echo "$(datestamp) $(infobox "Logging into the server.")"
-            ssh ${sshopts} ${user}@${primary_up} -p ${port}
+            ssh ${sshopts} ${user}@${primary_ip} -p ${port}
         fi
 
         exit 0
@@ -247,7 +254,17 @@ function access_server(){
 # This function is futile. Checking for sanity. Seriously?!
 
 function sanity_check(){
-    # If -n and -r are passed together, puke.   
+    # Checking the existance of commands. Exit if they don't exist. 
+    
+    # Only check if -e is passed. 
+    if [ -n "${expect_passed}" ]; then
+        check_command "/usr/bin/expect"
+    fi
+
+    check_command "/usr/bin/nc"
+
+    # If -n and -r are passed together, puke.
+
     if [ -n "${no_ping}" -a -n "${pendingreboot}" ]; then
         echo "$(datestamp) $(warningbox "ERROR! Cannot use [-n] and [-r] together!")"
         exit 1
@@ -272,32 +289,37 @@ function sanity_check(){
             export server_password
         fi
         
-        if [ "${sshopts}" == "-o" ]; then
-            unset sshopts
-        fi
+    fi
+
+    if [ "${sshopts}" == "-o" ]; then
+        export unset sshopts
     fi
 }
 
-function expect_login{}
+function expect_login(){
     # Logging into the server automatically. 
-    local sshport
     if [ -n ${port} ]; then
         sshport="-p ${port}"
     fi
-    sshopts="${sshopts} \"StrictHostKeyChecking no\""
-    ${expect_path}/expect -f
-        set timeout 20
-        spawn ssh ${sshopts} ${user}@${primary_ip} ${sshport}
-        expect "*assword: "
-        send "$server_password\r"
-        interact
-        exit
-    exit 0
+    if [ -n ${expect_login} ]; then
+        if [ -n ${sshopts} ]; then
+            sshopts="${sshopts} \"StrictHostKeyChecking no\""
+        else
+            sshopts="-o \"StrictHostKeyChecking no\""
+        fi
+        ${expect_path}/expect <<- NOSOUP
+            set timeout 20
+            spawn ssh ${sshopts} ${user}@${primary_ip} ${sshport}
+            expect "*?assword:*"
+            send -- "$server_password\r"
+            interact
+NOSOUP
+        exit 0
+    fi
 }
 
 function buh_bye(){
     # Boom goes the dynamite!
-    echo
     echo "$(datestamp) $(warningbox "OUCH! Exiting.")"
     exit 1
 }
@@ -358,13 +380,14 @@ done
 shift $((OPTIND - 1))
 sanity_check
 
-echo "$(datestamp) $(infobox "Checking ping on the server")"
+echo "$(datestamp) $(infobox "Checking ping on the server.")"
 check_ping $1
 
-echo "$(datestamp) $(infobox "Checking ssh on the server")"
+echo "$(datestamp) $(infobox "Checking ssh on the server.")"
 check_ssh
 
 echo "$(datestamp) $(successbox "Connectivity Confirmed!")"
 access_server
 
+echo "$(datestamp) $(infobox "Doing housekeeping tasks.")"
 housekeeping
