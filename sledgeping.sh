@@ -34,6 +34,7 @@ version="1.6b"
 
 export sshopts='-o'
 export expect_path="/usr/bin"
+export nc_path="/bin"
 
 txtblk='\033[0;30m' # Black - Regular
 txtred='\033[0;31m' # Red
@@ -239,7 +240,7 @@ function access_server(){
         ## Why in the world we'd download this script only to login ourselves is beyond me.
         ## But hey, sure, why not. :) 
         if [ -n "$nologin" ]; then
-            echo "$(datestamp)  $(infobox "Your SSH Login String is: \n\n\t\tssh ${sshopts} ${user}@${primary_ip} -p ${port}\r\n")"
+            echo -e "$(datestamp)  $(infobox "Your SSH Login String is: \n\n\t\tssh ${sshopts} ${user}@${primary_ip} -p ${port}\r\n")"
         else
         ## Otherwise, login to the server. 
             echo "$(datestamp) $(infobox "Logging into the server.")"
@@ -258,10 +259,10 @@ function sanity_check(){
     
     # Only check if -e is passed. 
     if [ -n "${expect_passed}" ]; then
-        check_command "/usr/bin/expect"
+        check_command "$expect_path/expect"
     fi
 
-    check_command "/usr/bin/nc"
+    check_command "$nc_path/nc"
 
     # If -n and -r are passed together, puke.
 
