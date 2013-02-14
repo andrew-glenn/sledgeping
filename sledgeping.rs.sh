@@ -90,7 +90,7 @@ function infobox(){
 function warningbox(){
     if [ -z ${nocolors} ]; then
         echo -e "[${bldred}!!${txtrst}] $@"
-    delse
+    else
         echo "[!!] $@"
     fi
 }
@@ -127,7 +127,7 @@ function usage(){
 
 function check_ping(){
     # Export the primary IP
-    export primary_ip=$1 
+    export primary_ip=$(ht -i $1 | egrep 'Primary IP:' | awk '{print $3}')
     # While the server isn't responding to ping...
     while true; do
         # If we've passed the option to skip ping...
@@ -161,9 +161,6 @@ function check_ping(){
             if [ -n "$never_gonna_let_you_down" ]; then
                 unset never_gonna_let_you_down
                 unset dotnotice
-            else
-                echo "$(datestamp) $(warningbox "This box is down, but you passed the -r (reboot) option. This does not compute")"
-                exit 1
             fi
             # If $dotnotice is zero (because I unset it above!)
             if [ -z "$dotnotice" ]; then
@@ -294,3 +291,4 @@ echo "$(datestamp) $(successbox "Connectivity Confirmed!")"
 access_server
 
 housekeeping
+

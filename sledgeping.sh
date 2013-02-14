@@ -162,9 +162,6 @@ function check_ping(){
             if [ -n "$never_gonna_let_you_down" ]; then
                 unset never_gonna_let_you_down
                 unset dotnotice
-            else
-                echo "$(datestamp) $(warningbox "This box is down, but you passed the -r (reboot) option. This does not compute")"
-                exit 1
             fi
             # If $dotnotice is zero (because I unset it above!)
             if [ -z "$dotnotice" ]; then
